@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llama-cpp-test
+  namespace: llama-cpp
+spec:
+  containers:
+    - name: llama-cpp-test
+      image: nicolaka/netshoot
+      command: ["/bin/bash", "-c", "sleep infinity"]

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zabbix-agent2
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zabbix-agent2
+  template:
+    metadata:
+      labels:
+        app: zabbix-agent2
+    spec:
+      containers:
+      - name: agent2
+        image: zabbix/zabbix-agent2:latest
+        ports:
+          - containerPort: 10050
+        volumeMounts:
+          - name: config
+            mountPath: /etc/zabbix/zabbix_agent2.conf
+            subPath: zabbix_agent2.conf
+      volumes:
+        - name: config
+          configMap:
+            name: zabbix-agent2-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zabbix-agent2
+  namespace: monitoring
+spec:
+  type: NodePort
+  ports:
+  - port: 10050
+    targetPort: 10050
+    nodePort: 30050  # Accessible via <node-ip>:30050
+  selector:
+    app: zabbix-agent2

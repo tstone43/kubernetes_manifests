@@ -1,0 +1,19 @@
+
+# psql-client.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: psql-client
+  namespace: guacamole
+  labels:
+    app: psql-client
+spec:
+  restartPolicy: Never
+  containers:
+  - name: psql
+    image: postgres:16
+    command: ["bash", "-lc", "sleep infinity"]
+    envFrom:
+    - secretRef:
+        name: guac-db-secret
+

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat with RAG</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; }
+    .msg-user { color: blue; margin: 5px 0; }
+    .msg-bot { color: green; margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+<h2>Chat with your AI</h2>
+
+<div id="chat"></div>
+
+<input id="input" type="text" style="width: 80%;" placeholder="Type a message...">
+<button onclick="send()">Send</button>
+
+<script>
+const sessionId = "tom";
+
+async function send() {
+  const input = document.getElementById("input");
+  const chat = document.getElementById("chat");
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Show user message
+  chat.innerHTML += `<div class="msg-user"><b>You:</b> ${text}</div>`;
+  input.value = '';
+  chat.scrollTop = chat.scrollHeight;
+
+  // Create AI message container
+  const botDiv = document.createElement('div');
+  botDiv.className = 'msg-bot';
+  botDiv.innerHTML = '<b>AI:</b> ';
+  chat.appendChild(botDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 180000);
+
+    const res = await fetch(
+      `/ask?q=${encodeURIComponent(text)}&session_id=${sessionId}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        if (part.startsWith(":")) continue;
+        if (!part.startsWith("data:")) continue;
+
+        const data = part.slice(5).trim();
+        
+        if (data === "[DONE]") {
+          break;
+        }
+
+        try {
+          const json = JSON.parse(data);
+          const delta = json?.choices?.[0]?.delta;
+
+          if (delta?.content) {
+            botDiv.innerHTML += delta.content.replace(/\n/g, "<br>");
+            chat.scrollTop = chat.scrollHeight;
+          }
+        } catch (e) {
+          console.error("Bad JSON chunk:", data);
+        }
+      }
+    }
+
+  } catch (error) {
+    chat.innerHTML += `<div class="msg-bot" style="color: red;">
+      <b>Error:</b> ${error.message}
+    </div>`;
+  }
+}
+</script>
+
+</body>
+</html>

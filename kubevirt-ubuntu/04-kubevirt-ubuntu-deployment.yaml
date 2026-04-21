@@ -1,0 +1,101 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: tcs-k3s04-root-dv
+  namespace: kubevirt-vm
+spec:
+  source:
+    http:
+      url: https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img
+  pvc:
+    storageClassName: rook-ceph-rbd
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tcs-k3s04-data-pvc
+  namespace: kubevirt-vm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: rook-ceph-rbd
+  resources:
+    requests:
+      storage: 75Gi
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: tcs-k3s04
+  namespace: kubevirt-vm
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: tcs-k3s04
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: tcs-k3s03
+      domain:
+        cpu:
+          cores: 4
+        resources:
+          requests:
+            memory: 6Gi
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+            - name: datadisk
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              bridge: {}
+            - name: podnet
+              masquerade: {}
+      networks:
+        - name: default
+          multus:
+            networkName: kubevirt-vm/br0-net
+        - name: podnet
+          pod: {}
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: tcs-k3s04-root-dv
+        - name: datadisk
+          persistentVolumeClaim:
+            claimName: tcs-k3s04-data-pvc
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              hostname: tcs-k3s04-k3s
+              manage_etc_hosts: true
+              ssh_pwauth: true
+              disable_root: false
+              users:
+                - name: tom
+                  sudo: ALL=(ALL) NOPASSWD:ALL
+                  groups: sudo
+                  shell: /bin/bash
+                  lock_passwd: false
+                  plain_text_passwd: changeMeNow
+              chpasswd:
+                expire: false
+              packages:
+                - qemu-guest-agent
+              runcmd:
+                - systemctl enable qemu-guest-agent
+                - systemctl start qemu-guest-agent

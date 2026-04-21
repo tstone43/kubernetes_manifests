@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: guacamole-ingress
+  namespace: guacamole
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Guacamole
+    gethomepage.dev/icon: guacamole.png
+    gethomepage.dev/href: https://guacamole.stone-lab.local/guacamole
+    gethomepage.dev/pod-selector: ""
+spec:
+  tls:
+  - hosts:
+    - guacamole.stone-lab.local
+    secretName: guacamole-tls
+  rules:
+  - host: guacamole.stone-lab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: guacamole-web
+            port:
+              number: 8080

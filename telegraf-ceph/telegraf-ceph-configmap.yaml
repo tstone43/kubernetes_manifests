@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+  namespace: monitoring
+data:
+  telegraf.conf: |
+    [global_tags]
+      cluster = "rook-ceph"
+    
+    [[inputs.socket_listener]]
+      service_address = "udp://:8094"
+      data_format = "influx"
+    
+    [[outputs.influxdb_v2]]
+      urls = ["http://192.168.4.14:8086"]
+      token = "$INFLUX_TOKEN"
+      organization = "Stone Lab"
+      bucket = "Stone Lab Bucket"      

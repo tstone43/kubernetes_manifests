@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: actual-budget-cert
+  namespace: actual-budget
+spec:
+  secretName: actual-budget-tls
+  dnsNames:
+  - actual-budget.stone-lab.local
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

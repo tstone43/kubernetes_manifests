@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: llama-cpp-ingress
+  namespace: llama-cpp
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+  - hosts:
+    - llama-cpp.stone-lab.local
+    secretName: llama-cpp-tls
+  rules:
+  - host: llama-cpp.stone-lab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: llama-cpp
+            port:
+              number: 8080

@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rook-ceph-dashboard
+  namespace: rook-ceph
+spec:
+  secretName: rook-ceph-dashboard-tls
+  subject:
+    organizations:
+      - Rook Ceph
+  commonName: rook-ceph-mgr-dashboard
+  dnsNames:
+    - rook-ceph-mgr-dashboard
+    - rook-ceph-mgr-dashboard.rook-ceph
+    - rook-ceph-mgr-dashboard.rook-ceph.svc
+    - rook-ceph-mgr-dashboard.rook-ceph.svc.cluster.local
+  issuerRef:
+    name: internal-ca        # <-- change if needed
+    kind: ClusterIssuer

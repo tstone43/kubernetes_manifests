@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-tavily
+  namespace: llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-tavily
+  template:
+    metadata:
+      labels:
+        app: rag-tavily
+      namespace: llama-cpp
+    spec:
+      nodeSelector:
+        audiomuse-ai: allowed
+      containers:
+        - name: rag
+          image: docker.io/library/rag-tavily:1.0.5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LLAMA_URL
+              value: "http://llama-cpp.llama-cpp.svc.cluster.local:8080/v1/chat/completions"
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rag-secrets
+                  key: tavily-api-key 
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-tavily
+  namespace: llama-cpp
+spec:
+  selector:
+    app: rag-tavily
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP

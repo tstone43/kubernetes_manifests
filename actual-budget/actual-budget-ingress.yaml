@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: actual-budget-ingress
+  namespace: actual-budget
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    gethomepage.dev/group: Tools
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/href: https://actual-budget.stone-lab.local
+    gethomepage.dev/icon: actual-budget.png
+    gethomepage.dev/name: Actual Budget
+    gethomepage.dev/pod-selector: ""
+spec:
+  tls:
+  - hosts:
+    - actual-budget.stone-lab.local
+    secretName: actual-budget-tls
+  rules:
+    - host: actual-budget.stone-lab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: actual-budget
+                port:
+                  number: 5006

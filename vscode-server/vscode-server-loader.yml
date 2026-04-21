@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vscode-server-loader
+  namespace: vscode-server
+spec:
+  containers:
+    - name: vscode-server-loader
+      image: ubuntu:24.04
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      volumeMounts:
+        - name: projects
+          mountPath: /home/coder/project
+  volumes:
+    - name: projects
+      persistentVolumeClaim:
+        claimName: vscode-projects-pvc

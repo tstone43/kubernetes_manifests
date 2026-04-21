@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: llama-mcp-cert
+  namespace: llama-cpp
+spec:
+  secretName: llama-mcp-tls
+  dnsNames:
+  - llama-mcp.stone-lab.local
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

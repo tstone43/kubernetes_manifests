@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: homepage
+  annotations:
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    app: homepage
+    io.kompose.service: homepage
+  name: homepage
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homepage
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: homepage
+      annotations:
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        app: homepage
+    spec:
+      serviceAccountName: homepage
+      automountServiceAccountToken: true
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      containers:
+        - env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: homepage.stone-lab.local
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+          image: ghcr.io/gethomepage/homepage:latest
+          name: homepage
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/config
+              name: homepage-persistent-storage
+      restartPolicy: Always
+      volumes:
+        - name: homepage-persistent-storage
+          persistentVolumeClaim:
+            claimName: homepage-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: homepage
+  name: homepage-pv-claim
+  labels:
+    app: homepage
+spec:
+  storageClassName: rook-cephfs   # use CephFS storage class name
+  accessModes:
+    - ReadWriteMany               # CephFS allows multiple writers
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: homepage
+  name: homepage-tcp-service
+spec:
+  selector:
+    app: homepage
+  ports:
+  - protocol: TCP
+    port: 3010
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homepage
+  namespace: homepage
+  labels:
+    app: homepage
+secrets:
+  - name: homepage
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: homepage
+  namespace: homepage
+  labels:
+    app: homepage
+  annotations:
+    kubernetes.io/service-account.name: homepage
+      
+

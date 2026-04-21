@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: stone-lab-wildcard
+  namespace: llama-cpp
+spec:
+  secretName: stone-lab-tls
+  commonName: "*.stone-lab.local"
+  dnsNames:
+  - "*.stone-lab.local"
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

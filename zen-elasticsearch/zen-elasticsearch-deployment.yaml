@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zen-elasticsearch
+  namespace: zen-elasticsearch
+spec:
+  type: ClusterIP
+  selector:
+    app: zen-elasticsearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zen-elasticsearch
+  namespace: zen-elasticsearch
+spec:
+  serviceName: zen-elasticsearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zen-elasticsearch
+  template:
+    metadata:
+      labels:
+        app: zen-elasticsearch
+    spec:
+      nodeSelector:
+        zen-elasticsearch: allowed
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.9.1
+          ports:
+            - containerPort: 9200
+              name: http
+          env:
+            - name: node.name
+              value: zen-es
+            - name: cluster.name
+              value: zen-es-cluster
+            - name: discovery.type
+              value: single-node
+            - name: bootstrap.memory_lock
+              value: "true"
+            - name: xpack.security.enabled
+              value: "false"
+            - name: xpack.security.http.ssl.enabled
+              value: "false"
+            - name: xpack.security.transport.ssl.enabled
+              value: "false"
+            - name: ES_JAVA_OPTS
+              value: "-Xms1000m -Xmx2000m"
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+      # Allow memory locking (optional, best-effort)
+      securityContext:
+        fsGroup: 1000
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: rook-cephfs   # or your RWO StorageClass
+        resources:
+          requests:
+            storage: 10Gi

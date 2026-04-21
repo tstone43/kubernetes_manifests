@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          args: ["redis-server", "--appendonly", "yes"]
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emby-session-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emby-session-service
+  template:
+    metadata:
+      labels:
+        app: emby-session-service
+    spec:
+      containers:
+        - name: emby-session-service
+          image: your-registry/emby-session-service:latest
+          env:
+            - name: EMBY_URL
+              value: "http://YOUR-MAC-IP:8096"
+            - name: EMBY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: emby-session-secret
+                  key: apiKey
+            - name: EMBY_USER_ID
+              value: ""  # optional
+            - name: EMBY_DEVICE_NAME
+              value: ""  # optional
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: POLL_INTERVAL
+              value: "10"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: emby-session-secret
+type: Opaque
+stringData:
+  apiKey: "REPLACE_WITH_YOUR_EMBY_API_KEY"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emby-session-service
+spec:
+  selector:
+    app: emby-session-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP

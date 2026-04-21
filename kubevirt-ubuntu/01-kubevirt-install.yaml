@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubevirt
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cdi
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubevirt-vm
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stirling-pdf-ingress
+  namespace: stirling-pdf
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+  - hosts:
+    - stirling-pdf.stone-lab.local
+    secretName: stirling-pdf-tls
+  rules:
+  - host: stirling-pdf.stone-lab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stirling-pdf
+            port:
+              number: 8080

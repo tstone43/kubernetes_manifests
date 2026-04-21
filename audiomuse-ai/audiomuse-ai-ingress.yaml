@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiomuse-ai-ingress
+  namespace: audiomuse-ai
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+  - hosts:
+    - audiomuse-ai.stone-lab.local
+    secretName: audiomuse-ai-tls
+  rules:
+  - host: audiomuse-ai.stone-lab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-audiomuse-audiomuse-ai-flask-service
+            port:
+              number: 8000

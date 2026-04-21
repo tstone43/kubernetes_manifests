@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-gpu
+  namespace: llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-gpu
+  template:
+    metadata:
+      labels:
+        app: llama-gpu
+    spec:
+      nodeSelector:
+        llama-cpp: allowed           
+      containers:
+        - name: llama-cpp
+          image: ghcr.io/ggml-org/llama.cpp:full-intel
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              ./llama-server \
+                -m /models/Phi-3.5-mini-instruct-Q8_0.gguf  \
+                --host 0.0.0.0 \
+                --port 8080 \
+                --n-gpu-layers 35 \
+                --ctx-size 4096 \
+                --threads 8 \
+                --batch-size 512 \
+                -v \
+                --verbose-prompt
+          env:
+            - name: SYCL_DEVICE_FILTER
+              value: "gpu"
+            - name: GGML_SYCL_ENABLE
+              value: "1"
+          resources:
+            limits:
+              memory: "16Gi"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+            - name: dri
+              mountPath: /dev/dri
+          securityContext:
+            privileged: true
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: llama-models-pvc
+        - name: dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-models-pvc
+  namespace: llama-cpp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: rook-cephfs      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-cpp
+  namespace: llama-cpp
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: llama-gpu      

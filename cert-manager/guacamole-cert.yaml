@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: guacamole-cert
+  namespace: guacamole
+spec:
+  secretName: guacamole-tls
+  dnsNames:
+  - guacamole.stone-lab.local
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

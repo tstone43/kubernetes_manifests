@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forgejo-ingress
+  namespace: forgejo
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Forgejo
+    gethomepage.dev/icon: forgejo.png
+    gethomepage.dev/href: https://git.stone-lab.local
+    gethomepage.dev/pod-selector: ""
+spec:
+  tls:
+  - hosts:
+    - git.stone-lab.local
+    secretName: forgejo-tls
+  rules:
+  - host: git.stone-lab.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: forgejo-web
+            port:
+              number: 3000

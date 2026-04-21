@@ -1,0 +1,140 @@
+zabbix_export:
+  version: '8.0'
+
+  template_groups:
+    - uuid: 8f4c2b8e2d7a4f8e9c3b9e1a4c2f7b91
+      name: Templates/Storage
+
+  templates:
+    - uuid: 3c9f1e726b4d4f0c9f8a2e7b1c4d9a33
+      template: ceph.prometheus.storage
+      name: 'Ceph Prometheus (Storage Monitoring)'
+      description: 'Template for monitoring Ceph cluster metrics via Prometheus endpoint.'
+      groups:
+        - name: Templates/Storage
+
+      items:
+        - uuid: 5b7c2f913e4a4c8f9d1b7a3e2c9f4b12
+          name: 'Ceph Prometheus Raw Metrics'
+          key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          history: '0'
+          value_type: TEXT
+          tags:
+            - tag: component
+              value: raw
+
+        - uuid: 1e9c4b728f3d4b1a9c2e4d7b2f9a1c55
+          name: 'Ceph Cluster Health Status'
+          type: DEPENDENT
+          key: ceph.cluster.health
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_health_status
+                - value
+          tags:
+            - tag: component
+              value: health
+          triggers:
+            - uuid: 4f1a7c923b8e4f2c9d1a8e3b7c1f2a44
+              expression: 'last(/ceph.prometheus.storage/ceph.cluster.health)=0'
+              name: 'Ceph cluster health is not OK'
+              priority: HIGH
+
+        - uuid: 7d3b1e924c8f4a1b9e2d1c7f3a9b4e21
+          name: 'Ceph Total Bytes'
+          type: DEPENDENT
+          key: ceph.bytes.total
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_cluster_total_bytes
+                - value
+          tags:
+            - tag: component
+              value: storage
+
+        - uuid: 2b9e4c717d3a4f8b9c1e3a7d2f9b1e66
+          name: 'Ceph Used Bytes'
+          type: DEPENDENT
+          key: ceph.bytes.used
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_cluster_used_bytes
+                - value
+          tags:
+            - tag: component
+              value: storage
+
+        - uuid: 6e1c4b923f7a4d8b9c2e1b7d3a9f4c88
+          name: 'Ceph Available Bytes'
+          type: DEPENDENT
+          key: ceph.bytes.avail
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_cluster_available_bytes
+                - value
+          tags:
+            - tag: component
+              value: storage
+          triggers:
+            - uuid: 9f2a7c314b8e4f1c9d2a7e3b1c4f2a77
+              expression: 'last(/ceph.prometheus.storage/ceph.bytes.avail) / last(/ceph.prometheus.storage/ceph.bytes.total) < 0.10'
+              name: 'Ceph storage critically low (<10%)'
+              priority: HIGH
+
+            - uuid: 8c1e7b423f9a4d2c9b1e5a7d3c9f1e22
+              expression: 'last(/ceph.prometheus.storage/ceph.bytes.avail) / last(/ceph.prometheus.storage/ceph.bytes.total) < 0.20'
+              name: 'Ceph storage warning (<20%)'
+              priority: WARNING
+
+        - uuid: 4b7c2e911f3a4d8b9c2e6a7d3f9b1c55
+          name: 'Ceph OSDs Up'
+          type: DEPENDENT
+          key: ceph.osd.up
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_osd_up
+                - value
+          tags:
+            - tag: component
+              value: osd
+
+        - uuid: 3e9b4c127f3a4d8b9c1e2a7d3f9b4e99
+          name: 'Ceph OSDs In'
+          type: DEPENDENT
+          key: ceph.osd.in
+          value_type: FLOAT
+          master_item:
+            key: 'prometheus.get["http://rook-ceph-mgr.rook-ceph.svc.cluster.local:9283/metrics","ceph_.*"]'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - ceph_osd_in
+                - value
+          tags:
+            - tag: component
+              value: osd
+          triggers:
+            - uuid: 1f7a3c924b8e4f1c9d2a3e7b1c4f2a11
+              expression: 'last(/ceph.prometheus.storage/ceph.osd.up) < last(/ceph.prometheus.storage/ceph.osd.in)'
+              name: 'Ceph OSDs down'
+              priority: HIGH

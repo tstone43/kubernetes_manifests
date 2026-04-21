@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: speedtest-tracker-helper
+  namespace: speedtest-tracker
+spec:
+  containers:
+    - name: helper
+      image: alpine:3.20
+      command: ["/bin/sh", "-c", "sleep 36000"]
+      volumeMounts:
+        - name: speedtest-tracker-config
+          mountPath: /config
+  volumes:
+    - name: speedtest-tracker-config
+      persistentVolumeClaim:
+        claimName: speedtest-tracker-pv-claim

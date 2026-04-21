@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat with RAG</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; }
+    .msg-user { color: blue; margin: 5px 0; }
+    .msg-bot { color: green; margin: 5px 0; }
+    .typing { color: orange; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<h2>Chat with your AI</h2>
+
+<div id="chat"></div>
+
+<input id="input" type="text" style="width: 80%;" placeholder="Type a message...">
+<button onclick="send()">Send</button>
+
+<script>
+const sessionId = "tom";
+
+async function send() {
+  const input = document.getElementById("input");
+  const chat = document.getElementById("chat");
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Show user message
+  chat.innerHTML += `<div class="msg-user"><b>You:</b> ${text}</div>`;
+  input.value = '';
+  chat.scrollTop = chat.scrollHeight;
+
+  // Show "Thinking..." indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.id = 'typing';
+  typingDiv.className = 'msg-bot typing';
+  typingDiv.innerHTML = '<b>AI:</b> Thinking... (llama.cpp loading)';
+  chat.appendChild(typingDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 180000);
+
+    const res = await fetch(`/ask?q=${encodeURIComponent(text)}&session_id=${sessionId}`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    // Remove typing indicator
+    if (document.getElementById('typing')) {
+      document.getElementById('typing').remove();
+    }
+    
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    const data = await res.json();
+    
+    // Extract answer safely
+    let answer = data?.answer || data?.error || 'No response';
+    
+    // Clean for display
+    answer = answer
+      // Remove web context chunk
+      .replace(/\[Web context:[\s\S]*$/i, '')
+      // Convert ALL newlines to <br>
+      .replace(/\\n|\n/g, '<br>')
+      // Clean up markdown
+      .replace(/^### .*/gm, '')
+      .replace(/^\* .*/gm, '')
+      .trim();
+
+    chat.innerHTML += `<div class="msg-bot"><b>AI:</b> ${answer || '(no content)'}</div>`;
+    
+  } catch (error) {
+    // Remove typing indicator
+    if (document.getElementById('typing')) {
+      document.getElementById('typing').remove();
+    }
+    
+    let errorMsg = error.message;
+    if (error.name === 'AbortError') {
+      errorMsg = 'Timed out after 3 minutes (llama.cpp still loading)';
+    }
+    
+    chat.innerHTML += `<div class="msg-bot" style="color: red;"><b>Error:</b> ${errorMsg}</div>`;
+  }
+  
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>

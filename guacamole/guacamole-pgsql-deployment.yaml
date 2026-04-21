@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: guac-db-secret
+  namespace: guacamole
+type: Opaque
+data:
+  POSTGRES_DB: Z3VhY2Ftb2xl        # "guacamole"
+  POSTGRES_USER: Z3VhY2Ftb2xl      # "guacamole"
+  POSTGRES_PASSWORD: SVU5UEN0QzI1eTVpamI4OFdVR3drVElpRXlPV0VwbEg=  # "supersecretpass"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: guac-postgres-pv-claim
+  namespace: guacamole
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: rook-cephfs   # <-- your CephFS RWX StorageClass
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guac-postgres
+  namespace: guacamole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guac-postgres
+  template:
+    metadata:
+      labels:
+        app: guac-postgres
+    spec:
+      nodeSelector:
+        guacamole: allowed
+      containers:
+        - name: postgres
+          image: postgres:16
+          envFrom:
+            - secretRef:
+                name: guac-db-secret
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: guac-postgres-persistent-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: guac-postgres-persistent-storage
+          persistentVolumeClaim:
+            claimName: guac-postgres-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guac-postgres
+  namespace: guacamole
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: guac-postgres
+

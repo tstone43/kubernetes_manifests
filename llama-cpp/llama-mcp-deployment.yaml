@@ -1,0 +1,128 @@
+# llama-rpc-mcp.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-models-mcp
+  namespace: llama-cpp
+storageClassName: rook-cephfs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-mcp
+  namespace: llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-mcp
+  template:
+    metadata:
+      labels:
+        app: llama-mcp
+    spec:
+      nodeSelector:
+        llama-cpp: allowed
+      containers:
+      - name: llama-mcp
+        image: docker.io/library/llama-cpp-rpc-cpu:0.2
+        workingDir: /app
+        command: ["/app/llama-server"]      
+        args:
+          - "-m"
+          - "/models/Llama-3.2-3B-Instruct-Q4_K_M.gguf"  # Your model (~2.8GB)
+          - "--host"
+          - "0.0.0.0"
+          - "--port"
+          - "8080"
+          - "--gpu-layers"
+          - "0"
+          - "--ctx-size"
+          - "8192"                 # 3B handles larger context easily
+          - "--threads"
+          - "16"                   # Optimal for i7-12700H
+          - "--threads-batch"
+          - "12"
+          - "--batch-size"
+          - "1024"                 # Max for 3B
+          - "--ubatch-size"
+          - "512"
+          - "--top-k"
+          - "32"
+          - "--top-p"
+          - "0.9"
+          - "--repeat-penalty"
+          - "1.05"
+          - "--temp"
+          - "0.15"
+          - "--jinja"              # Required for MCP tools
+          - "--webui-mcp-proxy"    # Your Tavily MCP
+          - "--mlock"
+          - "--verbose"
+        volumeMounts:
+        - name: models-mcp
+          mountPath: /models
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 16
+            memory: 10Gi
+      volumes:
+      - name: models-mcp
+        persistentVolumeClaim:
+          claimName: llama-models-mcp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-mcp
+  namespace: llama-cpp
+spec:
+  selector:
+    app: llama-mcp
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tavily-mcp
+  namespace: llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tavily-mcp
+  template:
+    metadata:
+      labels:
+        app: tavily-mcp
+    spec:
+      nodeSelector:
+        llama-cpp: allowed
+      containers:
+      - name: tavily-mcp
+        image: docker.io/library/tavily-mcp-web:0.5  # HTTP MCP server
+        env:
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rag-secrets
+              key: tavily-api-key
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tavily-mcp
+  namespace: llama-cpp
+spec:
+  selector:
+    app: tavily-mcp
+  ports:
+  - port: 8000
+    targetPort: 8000

@@ -1,0 +1,51 @@
+apiVersion: v1
+data:
+  bookmarks.yaml: "---\n# For configuration options and examples, please see:\n# https://gethomepage.dev/configs/bookmarks\n\n- Tech:\n    - My Github:\n        - abbr: GH\n          href: https://github.com/tstone43\n    - OPNSense Suricata Notes:\n        - abbr: OSN\n          href: https://www.bsmithio.com/post/opnsense-dashboard/      \n\n- Rent and Mortgage:\n    - Apartment Rent:\n        - abbr: AR\n          href: https://sheaapartments.securecafe.com/residentservices/seaside-at-laguna-heights/userlogin.aspx\n    - Home Mortgage:\n        - abbr: HM\n          href: https://yourmortgageonline.com\n\n- Phone and Internet:\n    - AT&T:\n        - abbr: AT\n          href: https://signin.att.com\n    - Spectrum:\n        - abbr: SP\n          href: https://id.spectrum.net/login?account_type=RESIDENTIAL&client_id=consumer_portal&code_challenge=mthq3Up0ZobzTa63bceJP1NAlw21yOjAZFmQ-2IpAbQ&code_challenge_method=S256&exVisitID=bc4305ce-ffd1-4b34-a33d-7410359ac2b7&nonce=682468058967281242709626101408&redirect_uri=https:%2F%2Fwww.spectrum.net%2Fsign-in-redirect&state=eyJ0YXJnZXRVcmwiOiIiLCJ4c3JmIjoiUmxReU5IUjVTVnBDZDBvdU5qSi1URXBXTjE4MU5VWnFTamhmT0RGTVNuSnhMa0ZWUXpGcFRtSlFVZyIsImlzRGxhIjpmYWxzZX0\n    - Cox:\n        - abbr: CO\n          href: https://www.cox.com/content/dam/cox/okta/signin.html?onsuccess=https%3A%2F%2Fwww.cox.com%2Fmybill%2Fhome.html\n\n- Trash and Water:\n    - Athens Trash:\n        - abbr: ATH\n          href: https://billing.athensservices.com/webpak/signin.jsp\n    - Conservice Trash and Water:\n        - abbr: CON\n          href: https://utilitiesinfo.conservice.com/\n    - Glendora Water:\n        - abbr: GW\n          href: https://cityofglendoraca.municipalonlinepayments.com\n\n- Electric and Gas:\n    - SoCal Edison:\n        - abbr: SCE\n          href: https://www.sce.com/customer-service/billing-payment/pay-my-bill\n    - SDGE:\n        - abbr: SD\n          href: https://myenergycenter.com\n    - SoCal Gas:\n        - abbr: SCG\n          href: https://www.socalgas.com/pay-bill\n\n- Insurance:\n    - Allstate for Apartment:\n        - abbr: AS\n          href: https://myaccountrwd.allstate.com\n    - Farmers for Home and Car:\n        - abbr: FAR\n          href: https://www.farmers.com/css/login\n"
+  custom.css: ""
+  custom.js: ""
+  docker.yaml: |
+    ---
+    # For configuration options and examples, please see:
+    # https://gethomepage.dev/configs/docker/
+
+    my-docker:
+      host: dockerproxy
+      port: 2375
+
+    #my-docker:
+      #socket: /var/run/docker.sock
+  kubernetes.yaml: |
+    ---
+    # sample kubernetes config
+  proxmox.yaml: |
+    ---
+    # url: https://proxmox.host.or.ip:8006
+    # token: username@pam!Token ID
+    # secret: secret
+  services.yaml: "---\n# For configuration options and examples, please see:\n# https://gethomepage.dev/configs/services/\n\n- Observability:\n    - Unbound dashboard:\n        href: https://192.168.4.254:444/ui/unbound/overview\n        description: opnsense\n        icon: opnsense.png\n    - OPNsense dashboard:\n        href: http://192.168.4.14:3000/d/suTmk8c7k/opnsense?orgId=1&refresh=60s\n        description: grafana\n        icon: grafana.png\n    - OPNsense Suricata dashboard:\n        href: http://192.168.4.14:3000/d/94raP_-7z/opnsense-suricata?orgId=1&from=now-2d&to=now\n        description: grafana\n        icon: grafana.png\n    - Uptime-Kuma widget:\n        href: http://192.168.4.14:3001\n        icon: uptime-kuma.png\n        widget:\n            type: uptimekuma\n            url: http://192.168.4.14:3001\n            slug: tomsvc\n            key: uk1_Ih0poAY_qKnj5iyGqySuhJGyqmsJuQWt0gXgjow-\t\n    - Speedtest-Tracker:\n        href: http://192.168.4.14:8004\n        icon: speedtest-tracker.png\n        widget:\n            type: speedtest\n            url: http://192.168.4.14:8004\n            bitratePrecision: 0 # optional, default is 0\n    - Reconya:\n        href: http://192.168.4.72:3008       \n        description: network device discovery\n    - Zabbix:\n        href: http://192.168.4.72:8080\n        icon: zabbix.png\n        widget:\n            type: zabbix\n            url: http://192.168.4.72:8080\n            key: 71437c4cce6e3ddd9895da6fd97a4c3688b1cc880f8b63eecd11baac5362e521             \n- Media:\n    - Plex:\n        href: http://192.168.4.14:32400\n        description: Plex\n        icon: plex.png\n    - Emby:\n        href: http://192.168.4.97:8097/\n        description: Emby\n        icon: emby.png\n    - RomM:\n        href: http://192.168.4.14:8003\n        description: Rom Library\n        icon: romm.png     \n    - QBittorrent:\n        href: http://192.168.4.14:8080\n        icon: qbittorrent.png\n        widget:\n            type: qbittorrent\n            url: http://192.168.4.14:8080\n            username: admin\n            password: itJpmY3XxLg3CFzseyve                       \n- Management:\n    - InfluxDB admin:\n        href: http://192.168.4.14:8086/\n        description: InfluxDB\n        icon: influxdb.png\n    - Netgear admin:\n        href: http://192.168.4.253\n        description: Access Point\n        icon: netgear.png\n    - OPNsense admin:\n        href: https://192.168.4.254:444\n        description: Firewall\n        icon: opnsense.png    \n"
+  settings.yaml: |
+    ---
+    # For configuration options and examples, please see:
+    # https://gethomepage.dev/configs/settings/
+
+    providers:
+      openweathermap: openweathermapapikey
+      weatherapi: weatherapiapikey
+  widgets.yaml: |
+    ---
+    # For configuration options and examples, please see:
+    # https://gethomepage.dev/configs/info-widgets/
+
+    - resources:
+        cpu: true
+        memory: true
+        disk: /
+
+    - search:
+        provider: duckduckgo
+        target: _blank
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: homepage
+  name: homepage-cm0

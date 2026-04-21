@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vscode-ingress
+  namespace: vscode-server
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    gethomepage.dev/group: Tools
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/href: https://vscode-server.stone-lab.local
+    gethomepage.dev/icon: vscode.png
+    gethomepage.dev/name: VSCode Server
+    gethomepage.dev/pod-selector: ""
+spec:
+  tls:
+  - hosts:
+    - vscode-server.stone-lab.local
+    secretName: vscode-server-tls
+  rules:
+    - host: vscode-server.stone-lab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vscode-tcp-service
+                port:
+                  number: 8080

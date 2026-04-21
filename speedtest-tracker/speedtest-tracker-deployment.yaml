@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: speedtest-tracker
+  annotations:
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    app: speedtest-tracker
+  name: speedtest-tracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: speedtest-tracker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      namespace: speedtest-tracker
+      annotations:
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        app: speedtest-tracker
+    spec:
+      containers:
+        - env:
+            - name: APP_KEY
+              value: base64:HGtIWj20JoGHHE5E7Ckb/AYvgIAruoCxQwM6yCXrIwg=
+            - name: DB_CONNECTION
+              value: sqlite
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: SPEEDTEST_SCHEDULE
+              value: 0 */12 * * *
+            - name: TZ
+              value: Utc/Los_Angeles
+          image: lscr.io/linuxserver/speedtest-tracker:latest
+          name: speedtest-tracker
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /config
+              name: speedtest-tracker-persistent-storage
+      restartPolicy: Always
+      volumes:
+        - name: speedtest-tracker-persistent-storage
+          persistentVolumeClaim:
+            claimName: speedtest-tracker-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: speedtest-tracker
+  name: speedtest-tracker-service
+spec:
+  selector:
+    app: speedtest-tracker
+  ports:
+    - protocol: "TCP"
+      port: 8004
+      targetPort: 80
+  type: ClusterIP
+

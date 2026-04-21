@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rag-tavily-ingress
+  namespace: llama-cpp
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+  - hosts:
+    - ai.stone-lab.local
+    secretName: rag-tavily-tls
+  rules:
+    - host: ai.stone-lab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rag-tavily
+                port:
+                  number: 8000

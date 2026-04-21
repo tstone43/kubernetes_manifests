@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vscode-server-cert
+  namespace: vscode-server
+spec:
+  secretName: vscode-server-tls
+  dnsNames:
+  - vscode-server.stone-lab.local
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: homepage
+  name: homepage-pv-claim
+  labels:
+    app: homepage
+spec:
+  storageClassName: rook-cephfs   # use CephFS storage class name
+  accessModes:
+    - ReadWriteMany               # CephFS allows multiple writers
+  resources:
+    requests:
+      storage: 1Gi

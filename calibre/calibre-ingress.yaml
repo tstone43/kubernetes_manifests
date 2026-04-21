@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calibre-ingress
+  namespace: calibre
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    gethomepage.dev/group: Productivity
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/href: https://books.stone-lab.local
+    gethomepage.dev/icon: calibre.png
+    gethomepage.dev/name: Calibre
+    gethomepage.dev/pod-selector: ""
+spec:
+  tls:
+  - hosts:
+    - books.stone-lab.local
+    secretName: calibre-tls
+  rules:
+    - host: books.stone-lab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: calibre
+                port:
+                  number: 8080

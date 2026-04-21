@@ -1,0 +1,18 @@
+apiVersion: ceph.rook.io/v1
+kind: CephFilesystem
+metadata:
+  name: cephfs-ssd
+  namespace: rook-ceph
+spec:
+  metadataServer:
+    activeCount: 1
+    activeStandby: false
+  metadataPool:
+    replicated:
+      size: 1
+  dataPools:
+    - name: ssd-data
+      replicated:
+        size: 1
+      deviceClass: ssd
+  preservePoolsOnDelete: true

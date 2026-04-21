@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: audiomuse-ai-cert
+  namespace: audiomuse-ai
+spec:
+  secretName: audiomuse-ai-tls
+  dnsNames:
+  - audiomuse-ai.stone-lab.local
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

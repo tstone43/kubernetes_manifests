@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vscode-projects-pvc
+  namespace: vscode-server
+  labels:
+    app: vscode
+spec:
+  storageClassName: rook-cephfs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vscode-settings-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---      
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vscode
+  namespace: vscode-server
+  annotations:
+    homepage.group: Tools
+    homepage.href: https://vscode-server.stone-lab.local
+    homepage.icon: vscode.png
+    homepage.name: VSCode Server
+  labels:
+    app: vscode
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vscode
+  template:
+    metadata:
+      namespace: vscode-server
+      annotations:
+        homepage.group: Tools
+        homepage.href: https://vscode-server.stone-lab.local
+        homepage.icon: vscode.png
+        homepage.name: VSCode Server
+      labels:
+        app: vscode
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: vscode
+          image: docker.io/library/vscode-server-custom:latest
+          imagePullPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vscode-auth
+                  key: PASSWORD
+            - name: KUBECONFIG
+              value: /home/coder/.kube/config       
+          volumeMounts:
+            - name: projects
+              mountPath: /home/coder/project
+            - name: kubeconfig
+              mountPath: /home/coder/.kube
+            - name: vscode-settings
+              mountPath: /home/coder/.local/share/code-server/
+            - name: git-config
+              mountPath: /home/coder/.gitconfig
+              subPath: .gitconfig
+            - name: git-credentials
+              mountPath: /home/coder/.git-credentials
+              subPath: .git-credentials
+              readOnly: true      
+      volumes:
+        - name: projects
+          persistentVolumeClaim:
+            claimName: vscode-projects-pvc
+        - name: kubeconfig
+          secret:
+            secretName: k3s-kubeconfig
+        - name: vscode-settings
+          persistentVolumeClaim:
+            claimName: vscode-settings-pvc
+        - name: git-config
+          secret:
+            secretName: git-config
+        - name: git-credentials
+          secret:
+            secretName: git-credentials
+---   
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: vscode-server
+  name: vscode-tcp-service
+spec:
+  selector:
+    app: vscode
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP

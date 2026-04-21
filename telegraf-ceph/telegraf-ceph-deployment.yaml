@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: telegraf
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      containers:
+      - name: telegraf
+        image: telegraf:1.29-alpine
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - name: telegraf-config
+          mountPath: /etc/telegraf/telegraf.conf
+          subPath: telegraf.conf
+        - name: var-run
+          mountPath: /var/run
+        env:
+        - name: INFLUX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-auth
+              key: token
+        ports:
+        - containerPort: 8094
+          name: telegraf-udp
+          protocol: UDP
+      volumes:
+      - name: telegraf-config
+        configMap:
+          name: telegraf-config
+      - name: var-run
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegraf
+  namespace: monitoring
+spec:
+  ports:
+  - port: 8094
+    protocol: UDP
+    targetPort: 8094
+  selector:
+    app: telegraf
+  type: ClusterIP        

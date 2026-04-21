@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose -f docker-compose.yml convert
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: dockerproxy
+  name: dockerproxy
+spec:
+  ports:
+    - name: "2375"
+      port: 2375
+      targetPort: 2375
+  selector:
+    io.kompose.service: dockerproxy

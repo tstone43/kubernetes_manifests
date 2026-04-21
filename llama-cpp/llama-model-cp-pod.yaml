@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llama-model-loader
+  namespace: llama-cpp
+spec:
+  containers:
+    - name: loader
+      image: ubuntu:24.04
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      volumeMounts:
+        - name: models
+          mountPath: /models
+  nodeSelector:
+    llama-cpp: allowed
+  volumes:
+    - name: models
+      persistentVolumeClaim:
+        claimName: llama-models-mcp     
